@@ -18,8 +18,8 @@
 */
 #[allow(unused_imports)]
 use super::{
-    BulkString, NullBulkString, RespArray, RespEncode, RespFrame, RespMap, RespNull, RespNullArray,
-    RespSet, SimpleError, SimpleString,
+    BulkString, RespArray, RespEncode, RespFrame, RespMap, RespNull, RespNullArray,
+    RespNullBulkString, RespSet, SimpleError, SimpleString,
 };
 
 const BUF_CAP: usize = 4096;
@@ -58,7 +58,7 @@ impl RespEncode for BulkString {
 }
 
 //null bulk string: "$-1\r\n"
-impl RespEncode for NullBulkString {
+impl RespEncode for RespNullBulkString {
     fn encode(self) -> Vec<u8> {
         b"$-1\r\n".to_vec()
     }
@@ -167,7 +167,7 @@ mod tests {
 
     #[test]
     fn test_null_bulk_string_encode() {
-        let frame: RespFrame = NullBulkString.into();
+        let frame: RespFrame = RespNullBulkString.into();
         assert_eq!(frame.encode(), b"$-1\r\n")
     }
 
