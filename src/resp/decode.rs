@@ -79,7 +79,11 @@ impl RespDecode for RespFrame {
                     }
                 }
             }
-            _ => Err(RespError::NotComplete),
+            None => Err(RespError::NotComplete),
+            _ => Err(RespError::InvalidFrame(format!(
+                "expect_length: unknown frame type: {:?}",
+                buf
+            ))),
         }
     }
 
