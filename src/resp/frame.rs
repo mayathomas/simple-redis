@@ -2,8 +2,8 @@ use bytes::BytesMut;
 use enum_dispatch::enum_dispatch;
 
 use super::{
-    null::RespNull, BulkString, RespArray, RespDecode, RespError, RespMap, RespNullArray,
-    RespNullBulkString, RespSet, SimpleError, SimpleString,
+    null::RespNull, BulkString, RespArray, RespDecode, RespError, RespMap, RespSet, SimpleError,
+    SimpleString,
 };
 
 #[enum_dispatch(RespEncode)]
@@ -13,10 +13,8 @@ pub enum RespFrame {
     Error(SimpleError),
     Integer(i64),
     BulkString(BulkString),
-    NullBulkString(RespNullBulkString),
     Array(RespArray),
     Null(RespNull),
-    NullArray(RespNullArray),
     Boolean(bool),
     Double(f64),
     Map(RespMap),
@@ -49,15 +47,8 @@ impl RespDecode for RespFrame {
                 Ok(frame.into())
             }
             Some(b'*') => {
-                // try null array first
-                match RespNullArray::decode(buf) {
-                    Ok(frame) => Ok(frame.into()),
-                    Err(RespError::NotComplete) => Err(RespError::NotComplete),
-                    _ => {
-                        let frame = RespArray::decode(buf)?;
-                        Ok(frame.into())
-                    }
-                }
+                let frame = RespArray::decode(buf)?;
+                Ok(frame.into())
             }
             Some(b'%') => {
                 let frame = RespMap::decode(buf)?;
@@ -68,15 +59,8 @@ impl RespDecode for RespFrame {
                 Ok(frame.into())
             }
             Some(b'$') => {
-                // try null bulk string first
-                match RespNullBulkString::decode(buf) {
-                    Ok(frame) => Ok(frame.into()),
-                    Err(RespError::NotComplete) => Err(RespError::NotComplete),
-                    Err(_) => {
-                        let frame = BulkString::decode(buf)?;
-                        Ok(frame.into())
-                    }
-                }
+                let frame = BulkString::decode(buf)?;
+                Ok(frame.into())
             }
             None => Err(RespError::NotComplete),
             _ => Err(RespError::InvalidFrame(format!(

@@ -11,14 +11,8 @@ mod simple_error;
 mod simple_string;
 
 pub use self::{
-    array::{RespArray, RespNullArray},
-    bulk_string::{BulkString, RespNullBulkString},
-    frame::RespFrame,
-    map::RespMap,
-    null::RespNull,
-    set::RespSet,
-    simple_error::SimpleError,
-    simple_string::SimpleString,
+    array::RespArray, bulk_string::BulkString, frame::RespFrame, map::RespMap, null::RespNull,
+    set::RespSet, simple_error::SimpleError, simple_string::SimpleString,
 };
 use bytes::{Buf, BytesMut};
 use enum_dispatch::enum_dispatch;

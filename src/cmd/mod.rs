@@ -1,6 +1,7 @@
 mod echo;
 mod hmap;
 mod map;
+mod set;
 
 use crate::{Backend, RespArray, RespError, RespFrame, SimpleString};
 use echo::Echo;
@@ -41,6 +42,8 @@ pub enum Command {
     HGetAll(HGetAll),
     Echo(Echo),
     HMget(HMget),
+    SAdd(SAdd),
+    Sismember(Sismember),
     //unrecognized command
     Unrecognized(Unrecognized),
 }
@@ -82,6 +85,18 @@ pub struct HMget {
 }
 
 #[derive(Debug)]
+pub struct SAdd {
+    key: String,
+    value: String,
+}
+
+#[derive(Debug)]
+pub struct Sismember {
+    key: String,
+    value: String,
+}
+
+#[derive(Debug)]
 pub struct Unrecognized;
 
 impl TryFrom<RespFrame> for Command {
@@ -108,6 +123,8 @@ impl TryFrom<RespArray> for Command {
                 b"hgetall" => Ok(HGetAll::try_from(v)?.into()),
                 b"hmget" => Ok(HMget::try_from(v)?.into()),
                 b"echo" => Ok(Echo::try_from(v)?.into()),
+                b"sadd" => Ok(SAdd::try_from(v)?.into()),
+                b"sismember" => Ok(Sismember::try_from(v)?.into()),
                 _ => Ok(Unrecognized.into()),
             },
             _ => Err(CommandError::InvalidCommand(
