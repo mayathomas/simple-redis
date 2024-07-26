@@ -5,8 +5,9 @@ use super::{extract_simple_frame_data, RespDecode, RespEncode, RespError, CRLF_L
 //integer: ":[<+|->]<value>\r\n"
 impl RespEncode for i64 {
     fn encode(self) -> Vec<u8> {
-        let sign = if self < 0 { "" } else { "+" };
-        format!(":{}{}\r\n", sign, self).into_bytes()
+        // 加上符号，客户端会报错Error: Bad integer value
+        // let sign = if self < 0 { "" } else { "" };
+        format!(":{}\r\n", self).into_bytes()
     }
 }
 
@@ -36,7 +37,7 @@ mod tests {
     #[test]
     fn test_integer_encode() {
         let frame: RespFrame = 123.into();
-        assert_eq!(frame.encode(), b":+123\r\n");
+        assert_eq!(frame.encode(), b":123\r\n");
         let frame: RespFrame = (-123).into();
         assert_eq!(frame.encode(), b":-123\r\n")
     }
