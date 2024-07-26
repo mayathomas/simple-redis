@@ -1,7 +1,8 @@
-use crate::{BulkString, RespArray, RespFrame};
+use crate::{BulkString, RespArray, RespFrame, SimpleString};
 
 use super::{
-    extract_args, validate_command, CommandError, CommandExecutor, HGet, HGetAll, HSet, RESP_OK,
+    extract_args, validate_command, CmpType, CommandError, CommandExecutor, HGet, HGetAll, HMget,
+    HSet, RESP_OK,
 };
 
 impl CommandExecutor for HGetAll {
@@ -46,11 +47,25 @@ impl CommandExecutor for HGet {
     }
 }
 
+impl CommandExecutor for HMget {
+    fn execute(self, backend: &crate::Backend) -> RespFrame {
+        let fields = &self.fields;
+        let mut result: Vec<RespFrame> = Vec::new();
+        for field in fields.iter() {
+            match backend.hget(&self.key, field) {
+                Some(value) => result.push(value),
+                None => result.push(SimpleString::new("(nill)").into()),
+            }
+        }
+        RespArray::new(result).into()
+    }
+}
+
 impl TryFrom<RespArray> for HGet {
     type Error = CommandError;
 
     fn try_from(value: RespArray) -> Result<Self, Self::Error> {
-        validate_command(&value, &["hget"], 2)?;
+        validate_command(&value, &["hget"], 2, CmpType::EQ)?;
 
         let mut args = extract_args(value, 1)?.into_iter();
         match (args.next(), args.next()) {
@@ -63,10 +78,36 @@ impl TryFrom<RespArray> for HGet {
     }
 }
 
+impl TryFrom<RespArray> for HMget {
+    type Error = CommandError;
+    fn try_from(value: RespArray) -> Result<Self, Self::Error> {
+        validate_command(&value, &["hmget"], 2, CmpType::LEAST)?;
+
+        let mut args = extract_args(value, 1)?.into_iter();
+
+        let thekey = match args.next() {
+            Some(RespFrame::BulkString(key)) => String::from_utf8(key.0)?,
+            _ => return Err(CommandError::InvalidArgument("Invalid key".to_string())),
+        };
+        let mut thevalue = Vec::new();
+        loop {
+            match args.next() {
+                Some(RespFrame::BulkString(key)) => thevalue.push(String::from_utf8(key.0)?),
+                None => break,
+                _ => return Err(CommandError::InvalidArgument("Invalid key".to_string())),
+            }
+        }
+        Ok(Self {
+            key: thekey,
+            fields: thevalue,
+        })
+    }
+}
+
 impl TryFrom<RespArray> for HGetAll {
     type Error = CommandError;
     fn try_from(value: RespArray) -> Result<Self, Self::Error> {
-        validate_command(&value, &["hgetall"], 1)?;
+        validate_command(&value, &["hgetall"], 1, CmpType::EQ)?;
 
         let mut args = extract_args(value, 1)?.into_iter();
         match args.next() {
@@ -83,7 +124,7 @@ impl TryFrom<RespArray> for HSet {
     type Error = CommandError;
 
     fn try_from(value: RespArray) -> Result<Self, Self::Error> {
-        validate_command(&value, &["hset"], 3)?;
+        validate_command(&value, &["hset"], 3, CmpType::EQ)?;
 
         let mut args = extract_args(value, 1)?.into_iter();
         match (args.next(), args.next(), args.next()) {

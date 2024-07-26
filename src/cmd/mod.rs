@@ -1,7 +1,9 @@
+mod echo;
 mod hmap;
 mod map;
 
 use crate::{Backend, RespArray, RespError, RespFrame, SimpleString};
+use echo::Echo;
 use enum_dispatch::enum_dispatch;
 use lazy_static::lazy_static;
 use thiserror::Error;
@@ -37,7 +39,8 @@ pub enum Command {
     HGet(HGet),
     HSet(HSet),
     HGetAll(HGetAll),
-
+    Echo(Echo),
+    HMget(HMget),
     //unrecognized command
     Unrecognized(Unrecognized),
 }
@@ -73,6 +76,12 @@ pub struct HGetAll {
 }
 
 #[derive(Debug)]
+pub struct HMget {
+    key: String,
+    fields: Vec<String>,
+}
+
+#[derive(Debug)]
 pub struct Unrecognized;
 
 impl TryFrom<RespFrame> for Command {
@@ -97,6 +106,8 @@ impl TryFrom<RespArray> for Command {
                 b"hget" => Ok(HGet::try_from(v)?.into()),
                 b"hset" => Ok(HSet::try_from(v)?.into()),
                 b"hgetall" => Ok(HGetAll::try_from(v)?.into()),
+                b"hmget" => Ok(HMget::try_from(v)?.into()),
+                b"echo" => Ok(Echo::try_from(v)?.into()),
                 _ => Ok(Unrecognized.into()),
             },
             _ => Err(CommandError::InvalidCommand(
@@ -116,17 +127,38 @@ fn extract_args(value: RespArray, start: usize) -> Result<Vec<RespFrame>, Comman
     Ok(value.0.into_iter().skip(start).collect::<Vec<RespFrame>>())
 }
 
+pub enum CmpType {
+    EQ,
+    LEAST,
+    MOST,
+}
+
 fn validate_command(
     value: &RespArray,
     names: &[&'static str],
     n_args: usize,
+    args_cmp_type: CmpType,
 ) -> Result<(), CommandError> {
-    if value.len() != n_args + names.len() {
-        return Err(CommandError::InvalidArgument(format!(
-            "{} command must have exactly {} arguments",
-            names.join(" "),
-            n_args
-        )));
+    match args_cmp_type {
+        CmpType::EQ => {
+            if value.len() != n_args + names.len() {
+                return Err(CommandError::InvalidArgument(format!(
+                    "{} command must have exactly {} arguments",
+                    names.join(" "),
+                    n_args
+                )));
+            }
+        }
+        CmpType::LEAST => {
+            if value.len() < n_args + names.len() {
+                return Err(CommandError::InvalidArgument(format!(
+                    "{} command must have at least {} arguments",
+                    names.join(" "),
+                    n_args
+                )));
+            }
+        }
+        _ => {}
     }
 
     for (i, name) in names.iter().enumerate() {
