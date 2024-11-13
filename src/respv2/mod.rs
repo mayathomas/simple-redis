@@ -1,6 +1,6 @@
 mod parser;
 use bytes::BytesMut;
-use parser::{parse_frame, parse_frame_length};
+pub use parser::{parse_frame, parse_frame_length};
 
 use crate::{RespError, RespFrame};
 

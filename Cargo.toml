@@ -19,3 +19,10 @@ tokio-util = { version = "0.7.11", features = ["codec"] }
 tracing = "0.1.40"
 tracing-subscriber = { version = "0.3.18", features = ["env-filter"] }
 winnow = { version = "0.6.20", features = ["simd"] }
+
+[dev-dependencies]
+criterion = { version = "0.5.1", features = ["html_reports"] }
+
+[[bench]]
+name = "resp"
+harness = false
