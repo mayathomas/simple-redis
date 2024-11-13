@@ -37,6 +37,12 @@ impl SimpleError {
     }
 }
 
+impl From<&str> for SimpleError {
+    fn from(s: &str) -> Self {
+        SimpleError::new(s)
+    }
+}
+
 impl Deref for SimpleError {
     type Target = String;
     fn deref(&self) -> &Self::Target {

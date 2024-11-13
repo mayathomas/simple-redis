@@ -7,7 +7,7 @@ use tracing::info;
 
 use crate::{
     cmd::{Command, CommandExecutor},
-    Backend, RespDecode, RespEncode, RespError, RespFrame,
+    Backend, RespDecodeV2, RespEncode, RespError, RespFrame,
 };
 
 #[derive(Debug)]

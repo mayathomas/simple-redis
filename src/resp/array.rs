@@ -62,6 +62,12 @@ impl RespArray {
     }
 }
 
+impl From<Vec<RespFrame>> for RespArray {
+    fn from(v: Vec<RespFrame>) -> Self {
+        RespArray(v)
+    }
+}
+
 impl Deref for RespArray {
     type Target = Vec<RespFrame>;
     fn deref(&self) -> &Self::Target {

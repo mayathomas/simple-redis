@@ -2,7 +2,7 @@ use std::ops::Deref;
 
 use bytes::BytesMut;
 
-use super::{extract_simple_frame_data, RespDecode, RespEncode, RespError, RespFrame, CRLF_LEN};
+use super::{extract_simple_frame_data, RespDecode, RespEncode, RespError, CRLF_LEN};
 
 #[derive(Debug, Clone, PartialEq, Eq, PartialOrd)]
 pub struct SimpleString(pub(crate) String);
@@ -37,9 +37,9 @@ impl SimpleString {
     }
 }
 
-impl From<&str> for RespFrame {
+impl From<&str> for SimpleString {
     fn from(s: &str) -> Self {
-        SimpleString(s.to_string()).into()
+        SimpleString(s.to_string())
     }
 }
 
@@ -59,6 +59,7 @@ impl Deref for SimpleString {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::RespFrame;
     use anyhow::{Ok, Result};
     use bytes::BufMut;
 
